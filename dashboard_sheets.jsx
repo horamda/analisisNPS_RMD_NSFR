@@ -1939,10 +1939,16 @@ function TabInforme({data}) {
     try {
       const prompt = buildInformeContexto(data);
       setProgreso('Generando análisis con IA (puede demorar ~20 segundos)...');
-      setInforme(await requestInformeJson(prompt));
+      const resultado = await requestInformeJson(prompt);
+      if (!resultado) throw new Error('La IA no devolvió un informe válido');
+      setInforme(resultado);
       setGenerado(true);
     } catch(e) {
-      setInforme(buildLocalInforme(data, e.message));
+      console.error('Error al generar informe:', e);
+      setInforme({
+        _error: `❌ Error: ${e.message}\n\nGenerando informe de respaldo...`,
+        ...buildLocalInforme(data, e.message)
+      });
       setGenerado(true);
     } finally {
       setLoading(false);
@@ -2047,7 +2053,9 @@ function TabInforme({data}) {
       )}
 
       {informe?._error && (
-        <div style={{color:C.red, fontSize:12, padding:16}}>{informe._error}</div>
+        <div style={{background:'#fde8e8', border:`2px solid ${C.red}`, borderRadius:8, padding:16, marginBottom:16, whiteSpace:'pre-wrap', fontFamily:'monospace'}}>
+          <div style={{color:C.red, fontSize:12, lineHeight:1.8}}>{informe._error}</div>
+        </div>
       )}
 
       {informe && !informe._error && (
