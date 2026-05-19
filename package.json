@@ -7,10 +7,10 @@
     "node": ">=20.19.0"
   },
   "scripts": {
-    "dev": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"node.exe scripts/vite.mjs --host 127.0.0.1\"",
-    "build": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"node.exe scripts/vite.mjs build\"",
-    "preview": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"node.exe scripts/vite.mjs preview --host 127.0.0.1\"",
-    "start": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"node.exe server.mjs\""
+    "dev": "node scripts/vite.mjs --host 127.0.0.1",
+    "build": "node scripts/vite.mjs build",
+    "preview": "node scripts/vite.mjs preview --host 127.0.0.1",
+    "start": "node server.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",
