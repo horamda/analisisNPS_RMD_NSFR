@@ -2193,7 +2193,7 @@ function TabIA({data, sistema}) {
       const res = await fetch('/api/ai', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
-          model:AI_MODEL, max_completion_tokens:1000,
+          model:AI_MODEL, max_completion_tokens:4000,
           messages: [{role:'system', content:sistema}, ...next.map(m => ({role:m.role, content:m.content}))]
         })
       });
