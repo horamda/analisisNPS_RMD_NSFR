@@ -1902,7 +1902,7 @@ function SeccionMetrica({titulo, icono, data, color}) {
           ))}
         </div>
       )}
-      {data.drivers_ranking && (
+      {Array.isArray(data.drivers_ranking) && (
         <div style={{marginBottom:14}}>
           <div style={{fontSize:9, color:C.text2, letterSpacing:1.5, textTransform:'uppercase', marginBottom:8}}>Ranking de Drivers</div>
           <div style={{display:'flex', flexWrap:'wrap', gap:6}}>
@@ -2112,7 +2112,7 @@ function TabInforme({data}) {
           <SeccionMetrica titulo="NS FR — Nivel de Servicio Facturación Remota" icono="📦" data={informe.nsfr} />
 
           {/* Plan de Acción */}
-          {informe.plan_accion && (
+          {Array.isArray(informe.plan_accion) && (
             <div style={{background:C.bg1, border:`1px solid ${C.border}`, borderRadius:8, padding:20, marginBottom:16}}>
               <div style={{fontSize:9, color:C.amber, letterSpacing:2, textTransform:'uppercase', fontFamily:'monospace', marginBottom:16}}>PLAN DE ACCIÓN PRIORIZADO</div>
               <div style={{display:'flex', flexDirection:'column', gap:8}}>

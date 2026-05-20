@@ -164,10 +164,8 @@ async function callGemini(payload) {
 
 function toGroqBody(payload) {
   const body = { ...payload };
-  const defaultGroqModel = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
-  if (!body.model || /^gpt-/i.test(body.model) || /^gemini-/i.test(body.model)) {
-    body.model = defaultGroqModel;
-  }
+  // GROQ_MODEL env var always wins; fall back to payload model, then hardcoded default
+  body.model = process.env.GROQ_MODEL || body.model || "openai/gpt-oss-20b";
   if (/gpt-oss/i.test(body.model)) {
     delete body.response_format;
     body.reasoning_effort ??= "low";
