@@ -1,0 +1,304 @@
+{
+  "checkedAt": "2026-09-24T03:25:09.241Z",
+  "scope": "Published CSV values; no database writes or formula inspection",
+  "profiles": [
+    {
+      "sheet": "Bees Care.",
+      "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRDjD7uMRDFiKSpnErKCU6u3lD6OlhOpJUePTNiLgjaVPggDIEHjwmYwJMqbZFtXhzvOvD1R8wYyi5y/pub?gid=421144927&single=true&output=csv",
+      "rows": 782,
+      "columns": [
+        "AÑO",
+        "MES",
+        "FECHA CREACIÓN",
+        "FECHA SOLUCIÓN",
+        "POC ID",
+        "NOMBRE DE CLIENTE",
+        "SUBREGIÓN",
+        "CÓD. DISTRIBUIDOR",
+        "DISTRIBUIDOR",
+        "CASO N°",
+        "ESTADO",
+        "SLA",
+        "MOTIVO",
+        "SUBMOTIVO",
+        "col_15",
+        "col_16",
+        "col_17",
+        "col_18",
+        "col_19",
+        "ESTADO_20",
+        "AÑO_21",
+        "MES_22",
+        "SUBMOTIVO_23",
+        "COUNTA de SUBMOTIVO",
+        "col_25",
+        "AÑO_26",
+        "SUBMOTIVO_27",
+        "MES_28",
+        "ESTADO_29",
+        "COUNTA de SUBMOTIVO_30"
+      ],
+      "normalized": 774,
+      "exactDuplicateRows": 3,
+      "eligible": 774,
+      "uniqueEligible": 762,
+      "repeatedGroups": 12,
+      "duplicateEligibleRows": 12,
+      "groupsWithDifferentScores": 0,
+      "groupsWithDifferentDrivers": 4,
+      "groupsWithDifferentRawRows": 12,
+      "dateRange": [
+        "2025-01-03T00:00:00.000Z",
+        "2026-08-25T00:00:00.000Z"
+      ],
+      "missingDate": 0,
+      "missingCustomer": 0,
+      "missingTicket": 0,
+      "status": {
+        "Cerrado": 763,
+        "Nuevo": 11
+      },
+      "eligibleStatus": {
+        "Cerrado": 763,
+        "Nuevo": 11
+      },
+      "sla": {
+        "": 774
+      },
+      "uniqueEligibleSla": {
+        "": 762
+      },
+      "answered": 0,
+      "newWithAnswerDate": 0,
+      "closedWithoutClosedDate": 396,
+      "answerBeforeOpened": 0,
+      "excelErrors": 0,
+      "rawStates": {
+        "Cerrado dentro del SLA": 648,
+        "Cerrado fuera del SLA": 115,
+        "Pendiente vencido": 6,
+        "Pendiente dentro del SLA": 5,
+        "": 4,
+        "ESTADO": 4
+      }
+    },
+    {
+      "sheet": "RMD2",
+      "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRDjD7uMRDFiKSpnErKCU6u3lD6OlhOpJUePTNiLgjaVPggDIEHjwmYwJMqbZFtXhzvOvD1R8wYyi5y/pub?gid=1623930858&single=true&output=csv",
+      "rows": 63163,
+      "columns": [
+        "Año",
+        "Mes",
+        "Rmd_rating_id",
+        "#FECHA_ENC",
+        "#FECHA_ENT",
+        "NRO_PEDIDO",
+        "COD_CLIENTE_DISTRIBUIDOR",
+        "NOMBRE_CLIENTE",
+        "#SCORE",
+        "#COMMENT",
+        "DESC_SEGMENTO_MKT",
+        "DESC_SEGMENTO_VENTA",
+        "COD_DISTRIBUIDOR",
+        "DESC_DISTRIBUIDOR",
+        "RESPONSABLE",
+        "STATUS",
+        "FECHA RTA",
+        "OBSERVACIONES DEL RESPONSABLE",
+        "CLIENTE",
+        "LOCALIDAD",
+        "DIRECCION",
+        "TELEFONO",
+        "HORARIO",
+        "VISITADO",
+        "Dias resolucion",
+        "Cumplimiento SLA",
+        "col_27",
+        "col_28",
+        "col_29",
+        "col_30",
+        "col_31"
+      ],
+      "normalized": 23166,
+      "exactDuplicateRows": 66,
+      "eligible": 198,
+      "uniqueEligible": 198,
+      "repeatedGroups": 0,
+      "duplicateEligibleRows": 0,
+      "groupsWithDifferentScores": 0,
+      "groupsWithDifferentDrivers": 0,
+      "groupsWithDifferentRawRows": 0,
+      "dateRange": [
+        "2025-03-01T00:00:00.000Z",
+        "2026-09-23T00:00:00.000Z"
+      ],
+      "missingDate": 0,
+      "missingCustomer": 0,
+      "missingTicket": 0,
+      "status": {
+        "Cerrado": 2119,
+        "Nuevo": 21047
+      },
+      "eligibleStatus": {
+        "Cerrado": 198
+      },
+      "sla": {
+        "OK": 194,
+        "NO OK": 4
+      },
+      "uniqueEligibleSla": {
+        "OK": 194,
+        "NO OK": 4
+      },
+      "answered": 198,
+      "newWithAnswerDate": 0,
+      "closedWithoutClosedDate": 1921,
+      "answerBeforeOpened": 0,
+      "excelErrors": 0,
+      "rawStates": {
+        "COMPLETO": 7568,
+        "": 55590,
+        "EN PROGRESO": 5
+      }
+    },
+    {
+      "sheet": "NPS2",
+      "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRDjD7uMRDFiKSpnErKCU6u3lD6OlhOpJUePTNiLgjaVPggDIEHjwmYwJMqbZFtXhzvOvD1R8wYyi5y/pub?gid=1910913493&single=true&output=csv",
+      "rows": 2037,
+      "columns": [
+        "FECHA",
+        "COD_CLIENTE_DISTRIBUIDOR",
+        "NOMBRE_CLIENTE",
+        "DESC_LOCALIDAD",
+        "SCORE",
+        "COD_DESC_SEGMENTO_MKT",
+        "COD_DESC_SEGMENTO_VENTA",
+        "COD_DISTRIBUIDOR",
+        "DDC_NAME",
+        "CATEGORIA",
+        "PRIMARY_DRIVER",
+        "SECONDARY_DRIVER",
+        "COMENTARIO",
+        "ESTADO",
+        "COD CLIENTE",
+        "LOCALIDAD",
+        "DIRECCION",
+        "TELEFONO",
+        "HORARIO",
+        "ACTION LOG",
+        "PLAN DE ACCION",
+        "EVIDENCIA",
+        "VISITADO",
+        "VISITADO_24",
+        "MES",
+        "AÑO",
+        "Fecha respuesta",
+        "Dias resolucion",
+        "Cumplimiento SLA"
+      ],
+      "normalized": 2037,
+      "exactDuplicateRows": 2,
+      "eligible": 187,
+      "uniqueEligible": 85,
+      "repeatedGroups": 33,
+      "duplicateEligibleRows": 102,
+      "groupsWithDifferentScores": 0,
+      "groupsWithDifferentDrivers": 33,
+      "groupsWithDifferentRawRows": 33,
+      "dateRange": [
+        "2025-05-03T11:34:39.000Z",
+        "2026-09-21T14:31:35.000Z"
+      ],
+      "missingDate": 0,
+      "missingCustomer": 0,
+      "missingTicket": 2037,
+      "status": {
+        "Cerrado": 1509,
+        "Nuevo": 521,
+        "En gestion": 7
+      },
+      "eligibleStatus": {
+        "Cerrado": 180,
+        "En gestion": 7
+      },
+      "sla": {
+        "OK": 182,
+        "NO OK": 5
+      },
+      "uniqueEligibleSla": {
+        "OK": 82,
+        "NO OK": 3
+      },
+      "answered": 187,
+      "newWithAnswerDate": 0,
+      "closedWithoutClosedDate": 1329,
+      "answerBeforeOpened": 153,
+      "excelErrors": 0,
+      "rawStates": {
+        "COMPLETADO": 1509,
+        "": 528
+      }
+    },
+    {
+      "sheet": "Tickets Bees Care",
+      "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRDjD7uMRDFiKSpnErKCU6u3lD6OlhOpJUePTNiLgjaVPggDIEHjwmYwJMqbZFtXhzvOvD1R8wYyi5y/pub?gid=0&single=true&output=csv",
+      "rows": 166,
+      "columns": [
+        "Forma de ingreso",
+        "Fecha de ingreso de ticket",
+        "ID Ticket",
+        "N° Cliente",
+        "Nombre Cliente",
+        "Asunto / Driver",
+        "Nombre del Solicitante",
+        "Comentario del cliente",
+        "Foto en el ticket",
+        "Fecha de contestacion",
+        "Quien contesto el ticket",
+        "Respuesta",
+        "Action Log",
+        "Dias resolucion",
+        "Cumplimiento SLA",
+        "col_16"
+      ],
+      "normalized": 166,
+      "exactDuplicateRows": 0,
+      "eligible": 166,
+      "uniqueEligible": 166,
+      "repeatedGroups": 0,
+      "duplicateEligibleRows": 0,
+      "groupsWithDifferentScores": 0,
+      "groupsWithDifferentDrivers": 0,
+      "groupsWithDifferentRawRows": 0,
+      "dateRange": [
+        "2024-05-04T00:00:00.000Z",
+        "2026-09-19T00:00:00.000Z"
+      ],
+      "missingDate": 0,
+      "missingCustomer": 4,
+      "missingTicket": 2,
+      "status": {
+        "En gestion": 166
+      },
+      "eligibleStatus": {
+        "En gestion": 166
+      },
+      "sla": {
+        "OK": 122,
+        "NO OK": 44
+      },
+      "uniqueEligibleSla": {
+        "OK": 122,
+        "NO OK": 44
+      },
+      "answered": 166,
+      "newWithAnswerDate": 0,
+      "closedWithoutClosedDate": 0,
+      "answerBeforeOpened": 2,
+      "excelErrors": 0,
+      "rawStates": {
+        "": 166
+      }
+    }
+  ]
+}

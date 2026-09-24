@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { aiHeaders, callAi, loadLocalEnv, readRequestBody } from "./ai-proxy.mjs";
+import { handleApi } from "./lib/api.mjs";
 
 loadLocalEnv();
 
@@ -10,6 +11,11 @@ function aiProxyPlugin() {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const pathname = (req.url || "").split("?")[0];
+        if (pathname.startsWith("/api/") && pathname !== "/api/ai") {
+          const handled = await handleApi(req, res);
+          if (handled) return;
+        }
+
         if (pathname !== "/api/ai") return next();
 
         if (req.method === "OPTIONS") {

@@ -76,6 +76,46 @@ GROQ_API_KEY=gsk_tu_key_real
 GROQ_MODEL=openai/gpt-oss-20b
 ```
 
+## Modulo de reclamos
+
+**Regla de SLA para todos los tipos de reclamos:** la contestación debe realizarse dentro de los **3 días corridos desde el ingreso del reclamo**, incluidos sábados, domingos y feriados. El plazo se mide hasta la fecha de contestación (`answered_at`), no hasta el cierre o la resolución. Según el origen, la contestación se registra en `Fecha de contestacion`, `Fecha respuesta` o `FECHA RTA`. Actualmente el indicador lee `Cumplimiento SLA`; esta regla está documentada y visible, pero el plazo no se recalcula automáticamente a partir de esas fechas.
+
+En **Inicio → Cumplimiento de SLA** se muestra el porcentaje por tipo, mes y año, con filtros combinables. Se consideran los reclamos que requieren gestión y se agrupan por su fecha de ingreso (`opened_at`). El cálculo usa el campo `Cumplimiento SLA`: `OK / (OK + NO OK) × 100`. Los valores vacíos o no reconocidos se muestran como **Sin evaluación** y no participan en el denominador. No se infiere el resultado a partir del estado del ticket ni se recalculan plazos. Los registros sin fecha aparecen únicamente sin filtros de mes/año. El porcentaje general se calcula sobre la suma de casos, no promediando porcentajes mensuales.
+
+La app incluye una pestana nueva `Reclamos` para gestionar reclamos importados desde Excel y desde el Google Sheet historico.
+
+Variables necesarias:
+
+```text
+DATABASE_URL=postgresql://...
+DATABASE_SSL=false
+JWT_SECRET=un_secreto_largo
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin1234
+```
+
+En Railway, `DATABASE_URL` debe venir de Postgres. No hardcodees la URL en el codigo. Si la conexion usa el host interno `postgres.railway.internal`, funciona desde Railway; para desarrollo local puede hacer falta la URL publica del servicio Postgres.
+
+El primer arranque crea las tablas y el usuario admin si no existe. Desde `Reclamos` se puede:
+
+- iniciar sesion;
+- crear usuarios con roles `admin`, `user` o `viewer`;
+- importar Excel por tipo: `NPS`, `RMD` o `BEES CARE`;
+- migrar las pestanas publicadas del Sheet historico;
+- gestionar estado, responsable, respuesta y action log sin pisar esos campos en futuras importaciones.
+
+Las importaciones usan claves de deduplicacion por fuente. Cuando un reclamo ya existe, se actualizan solo datos de origen y se preservan los campos de gestion manual.
+
+### Lectura y revisión de reclamos
+
+- El nombre publicado es **Bees Care.**, con punto final. Las conexiones se identifican por `gid`; además, se valida que las columnas correspondan al tipo seleccionado.
+- La vista **Bees Care.** muestra comentario, foto, fecha de contestación, quién contestó, respuesta, Action Log, días de resolución y SLA. Fecha y autor de la respuesta se editan en sus campos propios.
+- Una respuesta sin estado explícito se importa como **En gestion**, nunca como cierre automático. La fecha de entrega de RMD no se utiliza como fecha de cierre del reclamo.
+- Las filas del mismo caso se consolidan conservando comentarios, motivos y todas las filas originales en el detalle. Diferencias de puntaje, estado o SLA se envían a revisión.
+- Las filas sin puntaje válido se conservan en el archivo y se contabilizan por motivo en el resultado de la importación. No se asume que sean positivas ni negativas. Los informes quedan disponibles al abrir un archivo conservado.
+- El SLA sigue usando exclusivamente **Cumplimiento SLA**; una ausencia se informa como sin evaluación, sin inferir resultados del estado del ticket.
+- Las reglas de importación están versionadas. Volver a importar permite recuperar motivos y respuestas faltantes. Los estados manuales se preservan; solo se corrige automáticamente de Nuevo a En gestion cuando hay respuesta de origen y no existe edición manual del estado.
+
 Para subirlo:
 
 1. Subi el repositorio a GitHub.

@@ -4,6 +4,7 @@ import { createServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { aiHeaders, callAi, loadLocalEnv, readRequestBody } from "./ai-proxy.mjs";
+import { handleApi } from "./lib/api.mjs";
 
 loadLocalEnv();
 
@@ -60,6 +61,11 @@ async function getFilePath(requestUrl) {
 
 const server = createServer(async (req, res) => {
   const pathname = (req.url || "").split("?")[0];
+  if (pathname.startsWith("/api/") && pathname !== "/api/ai") {
+    const handled = await handleApi(req, res);
+    if (handled) return;
+  }
+
   if (pathname === "/api/ai" && req.method === "OPTIONS") {
     res.writeHead(204, aiHeaders);
     res.end();

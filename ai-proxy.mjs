@@ -29,6 +29,7 @@ export function readRequestBody(req) {
     req.on("data", (chunk) => { body += chunk; });
     req.on("end", () => resolveBody(body));
     req.on("error", reject);
+    req.setTimeout(45000, () => req.destroy(new Error("El proveedor de IA excedió el tiempo de espera.")));
   });
 }
 
@@ -191,6 +192,9 @@ async function callGroq(payload) {
     throw new Error(response.json?.error?.message || `Groq respondio HTTP ${response.statusCode}`);
   }
 
+  if (!response.json?.choices?.[0]?.message?.content?.trim()) {
+    throw new Error("Groq no devolvió contenido.");
+  }
   return { provider: "groq", ...response.json };
 }
 

@@ -7,17 +7,24 @@
     "node": ">=20.19.0"
   },
   "scripts": {
-    "dev": "node scripts/vite.mjs --host 127.0.0.1",
-    "build": "node scripts/vite.mjs build",
-    "preview": "node scripts/vite.mjs preview --host 127.0.0.1",
+    "dev": "./dev.cmd",
+    "build": "node ./node_modules/vite/bin/vite.js build",
+    "preview": "node ./node_modules/vite/bin/vite.js preview --host 127.0.0.1",
     "start": "node server.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.0",
-    "vite": "^7.0.0",
+    "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.42.0",
+    "pg": "^8.23.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "recharts": "^3.0.0"
+    "recharts": "^3.0.0",
+    "vite": "^7.0.0",
+    "xlsx": "^0.18.5"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
 }

@@ -1,4 +1,7 @@
 ﻿import React, { useState, useEffect, useRef } from "react";
+import ClaimsWorkspace from './src/ClaimsWorkspace.jsx';
+import { formatImportReport } from './lib/import-report.mjs';
+import AppShell, {ModuleMetrics,Overview} from './src/AppShell.jsx';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
@@ -273,6 +276,21 @@ const C = {
   text1: '#4B5563',
   text2: '#8B9DC3',
 };
+const LIGHT_THEME = {...C,bg0:'#f5f7f8',bg1:'#ffffff',bg2:'#e9efec',border:'#dfe6e3',border2:'#a3b5aa',blue:'#2469a1',green:'#167656',amber:'#b97c18',red:'#c34141',text0:'#202726',text1:'#47564f',text2:'#626f6c'};
+const DARK_THEME = {
+  bg0: '#171b19',
+  bg1: '#202523',
+  bg2: '#29332d',
+  border: '#37413b',
+  border2: '#6b7da3',
+  blue: '#83b7e2',
+  green: '#74d2a4',
+  amber: '#f59e0b',
+  red: '#f87171',
+  text0: '#e8eeea',
+  text1: '#c3cec6',
+  text2: '#a5b3ac',
+};
 const tt = {
   contentStyle:{background:'#FFFFFF', border:'1px solid #DFE3EE', color:'#1a2135', fontSize:11, fontFamily:'monospace', boxShadow:'0 2px 8px rgba(59,89,152,0.12)'},
   labelStyle:{color:'#3B5998'},
@@ -502,6 +520,7 @@ async function requestAiContent(payload) {
     try {
       const res = await fetch(endpoint, {
         method:'POST',
+        signal: AbortSignal.timeout(100000),
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify(payload),
       });
@@ -509,7 +528,10 @@ async function requestAiContent(payload) {
       if (!res.ok) {
         const message = data?.error?.message || `La API respondió HTTP ${res.status}.`;
         lastError = new Error(message);
-        if (![404, 405].includes(res.status)) throw lastError;
+        if (![404, 405].includes(res.status)) {
+          lastError.noRetry = true;
+          throw lastError;
+        }
         continue;
       }
       const text = data?.choices?.[0]?.message?.content;
@@ -518,6 +540,7 @@ async function requestAiContent(payload) {
       }
       return text;
     } catch (e) {
+      if (e.noRetry || e.name === 'TimeoutError') throw e;
       lastError = e;
     }
   }
@@ -907,7 +930,7 @@ function TabRMD({data}) {
               <Tooltip {...tt} />
               <ReferenceLine y={4.75} stroke={C.red} strokeDasharray="4 4" label={{value:'Target',fill:C.red,fontSize:9}} />
               {anios.map(a => (
-                <Line key={a} type="monotone" dataKey={String(a)} stroke={COLORS_BY_YEAR[a]||C.blue} strokeWidth={2} dot={{r:2}} connectNulls={false}>
+                <Line isAnimationActive={false} key={a} type="monotone" dataKey={String(a)} stroke={COLORS_BY_YEAR[a]||C.blue} strokeWidth={2} dot={{r:2}} connectNulls={false}>
                   {a===anios[anios.length-1] && <LabelList dataKey={String(a)} content={(props) => <PointLabel {...props} formatter={chartRmdLabel} fill={COLORS_BY_YEAR[a]||C.blue} />} />}
                 </Line>
               ))}
@@ -923,7 +946,7 @@ function TabRMD({data}) {
               <YAxis stroke={C.text2} tick={{fontSize:10, fill:C.text2}} />
               <Tooltip {...tt} />
               {anios.map(a => (
-                <Bar key={a} dataKey={String(a)} fill={a===anios[anios.length-1] ? C.amber : `${C.blue}60`} name={String(a)}>
+                <Bar isAnimationActive={false} key={a} dataKey={String(a)} fill={a===anios[anios.length-1] ? C.amber : `${C.blue}60`} name={String(a)}>
                   {a===anios[anios.length-1] && <LabelList dataKey={String(a)} content={(props) => <BarTopLabel {...props} formatter={chartPctLabel} fill={C.amber} />} />}
                 </Bar>
               ))}
@@ -940,7 +963,7 @@ function TabRMD({data}) {
             <YAxis dataKey="mot" type="category" stroke={C.text2} tick={{fontSize:10, fill:C.text2}} width={compact ? 104 : 140} />
             <Tooltip {...tt} />
             {anios.map(a => (
-              <Bar key={a} dataKey={String(a)} fill={a===anios[anios.length-1] ? C.amber : `${C.blue}50`} name={String(a)}>
+              <Bar isAnimationActive={false} key={a} dataKey={String(a)} fill={a===anios[anios.length-1] ? C.amber : `${C.blue}50`} name={String(a)}>
                 {a===anios[anios.length-1] && <LabelList dataKey={String(a)} content={(props) => <BarRightLabel {...props} formatter={chartCountLabel} fill={C.amber} />} />}
               </Bar>
             ))}
@@ -1019,7 +1042,7 @@ function TabNPS({data}) {
               <YAxis stroke={C.text2} domain={[-30,110]} tick={{fontSize:10, fill:C.text2}} />
               <Tooltip {...tt} formatter={v => v ? [`${v}%`,''] : ['—','']} />
               <ReferenceLine y={70} stroke={C.green} strokeDasharray="4 4" label={{value:'Target 70%',fill:C.green,fontSize:9}} />
-              {anios.map(a => <Line key={a} type="monotone" dataKey={String(a)} stroke={COLORS_BY_YEAR[a]||C.blue} strokeWidth={2} dot={{r:2}} connectNulls={false} />)}
+              {anios.map(a => <Line isAnimationActive={false} key={a} type="monotone" dataKey={String(a)} stroke={COLORS_BY_YEAR[a]||C.blue} strokeWidth={2} dot={{r:2}} connectNulls={false} />)}
               <Legend wrapperStyle={{fontSize:10, color:C.text1}} />
             </LineChart>
           </ResponsiveContainer>
@@ -1032,7 +1055,7 @@ function TabNPS({data}) {
               <YAxis stroke={C.text2} tick={{fontSize:10, fill:C.text2}} />
               <Tooltip {...tt} formatter={v => v ? [`${v}%`,''] : ['—','']} />
               <ReferenceLine y={10} stroke={C.red} strokeDasharray="4 4" label={{value:'Meta <10%',fill:C.red,fontSize:9}} />
-              {anios.map(a => <Line key={a} type="monotone" dataKey={String(a)} stroke={COLORS_BY_YEAR[a]||C.amber} strokeWidth={2} dot={{r:2}} connectNulls={false} />)}
+              {anios.map(a => <Line isAnimationActive={false} key={a} type="monotone" dataKey={String(a)} stroke={COLORS_BY_YEAR[a]||C.amber} strokeWidth={2} dot={{r:2}} connectNulls={false} />)}
               <Legend wrapperStyle={{fontSize:10, color:C.text1}} />
             </LineChart>
           </ResponsiveContainer>
@@ -1046,7 +1069,7 @@ function TabNPS({data}) {
             <YAxis stroke={C.text2} tick={{fontSize:10, fill:C.text2}} />
             <Tooltip {...tt} formatter={v => v ? [`${v}%`,''] : ['—','']} />
             <ReferenceLine y={70} stroke={C.green} strokeDasharray="4 4" />
-            {anios.map(a => <Bar key={a} dataKey={String(a)} fill={a===anios[anios.length-1] ? C.amber : `${C.blue}60`} name={String(a)} />)}
+            {anios.map(a => <Bar isAnimationActive={false} key={a} dataKey={String(a)} fill={a===anios[anios.length-1] ? C.amber : `${C.blue}60`} name={String(a)} />)}
             <Legend wrapperStyle={{fontSize:10, color:C.text1}} />
           </BarChart>
         </ResponsiveContainer>
@@ -1300,7 +1323,7 @@ function TabNPSMejorado({data}) {
               <Tooltip {...tt} formatter={v => [fmtPct1(v),'']} />
               <ReferenceLine y={NPS_TARGET} stroke={C.green} strokeDasharray="4 4" label={{value:`Target ${NPS_TARGET}%`,fill:C.green,fontSize:9}} />
               {anios.map(a => (
-                <Line key={a} type="monotone" dataKey={String(a)} stroke={COLORS_BY_YEAR[a]||C.blue} strokeWidth={a===currentYear?2.8:2} dot={{r:a===currentYear?4:3}} connectNulls={false}>
+                <Line isAnimationActive={false} key={a} type="monotone" dataKey={String(a)} stroke={COLORS_BY_YEAR[a]||C.blue} strokeWidth={a===currentYear?2.8:2} dot={{r:a===currentYear?4:3}} connectNulls={false}>
                   {a===currentYear && <LabelList dataKey={String(a)} content={(props) => <PointLabel {...props} formatter={chartPctLabel} fill={COLORS_BY_YEAR[a]||C.blue} />} />}
                 </Line>
               ))}
@@ -1318,7 +1341,7 @@ function TabNPSMejorado({data}) {
               <Tooltip {...tt} formatter={v => [fmtPct1(v),'']} />
               <ReferenceLine y={10} stroke={C.red} strokeDasharray="4 4" label={{value:'Meta <10%',fill:C.red,fontSize:9}} />
               {anios.map(a => (
-                <Line key={a} type="monotone" dataKey={String(a)} stroke={COLORS_BY_YEAR[a]||C.amber} strokeWidth={a===currentYear?2.8:2} dot={{r:a===currentYear?4:3}} connectNulls={false}>
+                <Line isAnimationActive={false} key={a} type="monotone" dataKey={String(a)} stroke={COLORS_BY_YEAR[a]||C.amber} strokeWidth={a===currentYear?2.8:2} dot={{r:a===currentYear?4:3}} connectNulls={false}>
                   {a===currentYear && <LabelList dataKey={String(a)} content={(props) => <PointLabel {...props} formatter={chartPctLabel} fill={COLORS_BY_YEAR[a]||C.amber} />} />}
                 </Line>
               ))}
@@ -1338,7 +1361,7 @@ function TabNPSMejorado({data}) {
               <Tooltip {...tt} formatter={v => [fmtPct1(v),'']} />
               <ReferenceLine y={NPS_TARGET} stroke={C.green} strokeDasharray="4 4" />
               {anios.map(a => (
-                <Bar key={a} dataKey={String(a)} fill={a===currentYear ? C.amber : `${C.blue}60`} name={String(a)} radius={[4,4,0,0]}>
+                <Bar isAnimationActive={false} key={a} dataKey={String(a)} fill={a===currentYear ? C.amber : `${C.blue}60`} name={String(a)} radius={[4,4,0,0]}>
                   {a===currentYear && <LabelList dataKey={String(a)} content={(props) => <BarTopLabel {...props} formatter={chartPctLabel} fill={C.amber} />} />}
                 </Bar>
               ))}
@@ -1372,13 +1395,13 @@ function TabNPSMejorado({data}) {
             <XAxis type="number" domain={[0,100]} stroke={C.text2} tick={{fontSize:10, fill:C.text2}} tickFormatter={v => `${v}%`} />
             <YAxis dataKey="driver" type="category" stroke={C.text2} tick={{fontSize:10, fill:C.text2}} width={compact ? 112 : 140} />
             <Tooltip {...tt} formatter={(v, name) => [fmtPct1(v), name]} />
-            <Bar dataKey="promPct" stackId="mix" fill={C.green} name="Promotores" radius={[4,0,0,4]}>
+            <Bar isAnimationActive={false} dataKey="promPct" stackId="mix" fill={C.green} name="Promotores" radius={[4,0,0,4]}>
               <LabelList dataKey="promPct" content={(props) => <StackCenterLabel {...props} fill="#fff" />} />
             </Bar>
-            <Bar dataKey="neutPct" stackId="mix" fill={C.text2} name="Neutros">
+            <Bar isAnimationActive={false} dataKey="neutPct" stackId="mix" fill={C.text2} name="Neutros">
               <LabelList dataKey="neutPct" content={(props) => <StackCenterLabel {...props} fill={C.text0} />} />
             </Bar>
-            <Bar dataKey="detrPct" stackId="mix" fill={C.red} name="Detractores" radius={[0,4,4,0]}>
+            <Bar isAnimationActive={false} dataKey="detrPct" stackId="mix" fill={C.red} name="Detractores" radius={[0,4,4,0]}>
               <LabelList dataKey="detrPct" content={(props) => <StackCenterLabel {...props} fill="#fff" />} />
             </Bar>
             <Legend wrapperStyle={{fontSize:10, color:C.text1}} />
@@ -1406,12 +1429,12 @@ function TabNPSMejorado({data}) {
               <Tooltip {...tt} formatter={(v, name) => [fmtPct1(v), name]} />
               <ReferenceLine y={NPS_TARGET} stroke={C.green} strokeDasharray="4 4" label={{value:`Target ${NPS_TARGET}%`,fill:C.green,fontSize:9}} />
               {anios.map(a => (
-                <Line key={`${a}-delivery`} type="monotone" dataKey={`${a} Delivery`} stroke={a===currentYear ? C.amber : C.red} strokeWidth={a===currentYear?3:2} dot={{r:a===currentYear?4:3}} connectNulls={false}>
+                <Line isAnimationActive={false} key={`${a}-delivery`} type="monotone" dataKey={`${a} Delivery`} stroke={a===currentYear ? C.amber : C.red} strokeWidth={a===currentYear?3:2} dot={{r:a===currentYear?4:3}} connectNulls={false}>
                   {a===currentYear && <LabelList dataKey={`${a} Delivery`} content={(props) => <PointLabel {...props} formatter={chartPctLabel} fill={C.amber} />} />}
                 </Line>
               ))}
               {anios.map(a => (
-                <Line key={`${a}-gral`} type="monotone" dataKey={`${a} NPS Gral`} stroke={a===currentYear ? C.blue : C.border2} strokeWidth={a===currentYear?2.5:2} strokeDasharray="5 5" dot={{r:2}} connectNulls={false}>
+                <Line isAnimationActive={false} key={`${a}-gral`} type="monotone" dataKey={`${a} NPS Gral`} stroke={a===currentYear ? C.blue : C.border2} strokeWidth={a===currentYear?2.5:2} strokeDasharray="5 5" dot={{r:2}} connectNulls={false}>
                   {a===currentYear && <LabelList dataKey={`${a} NPS Gral`} content={(props) => <PointLabel {...props} formatter={chartPctLabel} fill={C.blue} offsetY={14} />} />}
                 </Line>
               ))}
@@ -1440,13 +1463,13 @@ function TabNPSMejorado({data}) {
               <XAxis dataKey="mes" stroke={C.text2} tick={{fontSize:10, fill:C.text2}} />
               <YAxis domain={[0,100]} stroke={C.text2} tick={{fontSize:10, fill:C.text2}} tickFormatter={v => `${v}%`} />
               <Tooltip {...tt} formatter={(v, name) => [fmtPct1(v), name]} />
-              <Bar dataKey="promPct" stackId="mix" fill={C.green} name="Promotores" radius={[4,4,0,0]}>
+              <Bar isAnimationActive={false} dataKey="promPct" stackId="mix" fill={C.green} name="Promotores" radius={[4,4,0,0]}>
                 <LabelList dataKey="promPct" content={(props) => <StackCenterLabel {...props} fill="#fff" />} />
               </Bar>
-              <Bar dataKey="neutPct" stackId="mix" fill={C.text2} name="Neutros">
+              <Bar isAnimationActive={false} dataKey="neutPct" stackId="mix" fill={C.text2} name="Neutros">
                 <LabelList dataKey="neutPct" content={(props) => <StackCenterLabel {...props} fill={C.text0} />} />
               </Bar>
-              <Bar dataKey="detrPct" stackId="mix" fill={C.red} name="Detractores">
+              <Bar isAnimationActive={false} dataKey="detrPct" stackId="mix" fill={C.red} name="Detractores">
                 <LabelList dataKey="detrPct" content={(props) => <StackCenterLabel {...props} fill="#fff" />} />
               </Bar>
               <Legend wrapperStyle={{fontSize:10, color:C.text1}} />
@@ -1462,11 +1485,11 @@ function TabNPSMejorado({data}) {
               <YAxis dataKey="motivo" type="category" stroke={C.text2} tick={{fontSize:10, fill:C.text2}} width={compact ? 126 : 180} />
               <Tooltip {...tt} formatter={(v, name) => [v, name]} />
               {prevYear && (
-                <Bar dataKey="anterior" fill={`${C.blue}55`} name={String(prevYear)} radius={[0,4,4,0]}>
+                <Bar isAnimationActive={false} dataKey="anterior" fill={`${C.blue}55`} name={String(prevYear)} radius={[0,4,4,0]}>
                   <LabelList dataKey="anterior" content={(props) => <BarRightLabel {...props} formatter={chartCountLabel} fill={C.blue} />} />
                 </Bar>
               )}
-              <Bar dataKey="actual" fill={C.amber} name={String(currentYear)} radius={[0,4,4,0]}>
+              <Bar isAnimationActive={false} dataKey="actual" fill={C.amber} name={String(currentYear)} radius={[0,4,4,0]}>
                 <LabelList dataKey="actual" content={(props) => <BarRightLabel {...props} formatter={chartCountLabel} fill={C.amber} />} />
               </Bar>
               <Legend wrapperStyle={{fontSize:10, color:C.text1}} />
@@ -1537,7 +1560,7 @@ function TabNSFR({data}) {
             <Tooltip {...tt} formatter={v => v ? [`${v.toFixed(1)}%`,''] : ['—','']} />
             <ReferenceLine y={70} stroke={C.green} strokeDasharray="4 4" label={{value:'Target 70%',fill:C.green,fontSize:9}} />
             {anios.map(a => (
-              <Line key={a} type="monotone" dataKey={String(a)} stroke={COLORS_BY_YEAR[a]||C.blue} strokeWidth={a===anios[anios.length-1]?2.5:2} dot={{r:a===anios[anios.length-1]?4:3}} connectNulls={false}>
+              <Line isAnimationActive={false} key={a} type="monotone" dataKey={String(a)} stroke={COLORS_BY_YEAR[a]||C.blue} strokeWidth={a===anios[anios.length-1]?2.5:2} dot={{r:a===anios[anios.length-1]?4:3}} connectNulls={false}>
                 {a===anios[anios.length-1] && <LabelList dataKey={String(a)} content={(props) => <PointLabel {...props} formatter={chartPctLabel} fill={COLORS_BY_YEAR[a]||C.blue} />} />}
               </Line>
             ))}
@@ -2179,6 +2202,7 @@ function TabIA({data, sistema}) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const endRef = useRef(null);
+  const [chatError, setChatError] = useState('');
 
   useEffect(() => { endRef.current?.scrollIntoView({behavior:'smooth'}); }, [msgs]);
 
@@ -2189,19 +2213,17 @@ function TabIA({data, sistema}) {
     const next = [...msgs, {role:'user', content:msg}];
     setMsgs(next);
     setLoading(true);
+    setChatError('');
     try {
-      const res = await fetch('/api/ai', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
+      const reply = await requestAiContent({
           model:AI_MODEL, max_completion_tokens:4000,
-          messages: [{role:'system', content:sistema}, ...next.map(m => ({role:m.role, content:m.content}))]
-        })
+          messages: [{role:'system', content:sistema}, ...next.filter((m,i) => i > 0).map(m => ({role:m.role, content:m.content}))]
       });
-      const d = await res.json();
-      const reply = d.choices?.[0]?.message?.content || 'Sin respuesta.';
       setMsgs(prev => [...prev, {role:'assistant', content:reply}]);
     } catch(e) {
-      setMsgs(prev => [...prev, {role:'assistant', content:'Error al conectar.'}]);
+      setMsgs(next.slice(0,-1));
+      setInput(msg);
+      setChatError(e.message || 'Error al conectar con la IA.');
     } finally { setLoading(false); }
   };
 
@@ -2239,6 +2261,7 @@ function TabIA({data, sistema}) {
               {m.content}
             </div>
           ))}
+          {chatError && <div role="alert" style={{color:C.red, fontSize:12}}>{chatError}</div>}
           {loading && <div style={{color:C.blue, fontSize:11, fontFamily:'monospace'}}>Analizando...</div>}
           <div ref={endRef} />
         </div>
@@ -2262,16 +2285,402 @@ function TabIA({data, sistema}) {
   );
 }
 
+const CLAIM_STATUSES_UI = ["Nuevo", "En gestion", "Esperando respuesta", "Cerrado", "Descartado"];
+const CLAIM_SOURCES_UI = [
+  {value:"NPS", label:"NPS"},
+  {value:"RMD", label:"RMD"},
+  {value:"BEES_CARE", label:"BEES CARE"},
+];
+
+async function apiRequest(path, {method = "GET", token, body} = {}) {
+  const res = await fetch(path, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? {Authorization:`Bearer ${token}`} : {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error?.message || `HTTP ${res.status}`);
+  return data;
+}
+
+function Field({label, children}) {
+  return (
+    <label style={{display:'grid', gap:5, fontSize:10, color:C.text2, textTransform:'uppercase', letterSpacing:1}}>
+      {label}
+      {children}
+    </label>
+  );
+}
+
+const inputStyle = {
+  width:'100%', border:`1px solid ${C.border}`, borderRadius:6, padding:'9px 10px',
+  fontFamily:'monospace', fontSize:12, color:C.text0, background:'#fff',
+};
+
+function LoginPanel({onLogin}) {
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function submit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const data = await apiRequest('/api/auth/login', {method:'POST', body:{username, password}});
+      onLogin(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} style={{maxWidth:380, margin:'30px auto', background:C.bg1, border:`1px solid ${C.border}`, borderRadius:8, padding:22, boxShadow:'0 1px 4px rgba(59,89,152,0.08)'}}>
+      <div style={{fontSize:18, fontWeight:700, color:C.blue, marginBottom:18}}>Ingreso a reclamos</div>
+      <Field label="Usuario"><input style={inputStyle} value={username} onChange={e=>setUsername(e.target.value)} /></Field>
+      <div style={{height:12}} />
+      <Field label="Contrasena"><input style={inputStyle} type="password" value={password} onChange={e=>setPassword(e.target.value)} /></Field>
+      {error && <div style={{marginTop:12, color:C.red, fontSize:12}}>{error}</div>}
+      <button disabled={loading} style={{marginTop:18, width:'100%', border:'none', borderRadius:6, background:C.blue, color:'#fff', padding:'11px 14px', fontFamily:'monospace', fontWeight:700, cursor:'pointer'}}>
+        {loading ? 'Ingresando...' : 'Ingresar'}
+      </button>
+    </form>
+  );
+}
+
+function UsersCrud({token}) {
+  const [users, setUsers] = useState([]);
+  const [form, setForm] = useState({username:'', password:'', display_name:'', role:'user'});
+  const [message, setMessage] = useState('');
+
+  async function load() {
+    const data = await apiRequest('/api/users', {token});
+    setUsers(data.users || []);
+  }
+  useEffect(() => { load().catch(e => setMessage(e.message)); }, [token]);
+
+  async function create(e) {
+    e.preventDefault();
+    setMessage('');
+    try {
+      await apiRequest('/api/users', {method:'POST', token, body:form});
+      setForm({username:'', password:'', display_name:'', role:'user'});
+      await load();
+      setMessage('Usuario creado.');
+    } catch (e) {
+      setMessage(e.message);
+    }
+  }
+
+  async function patchUser(id, patch) {
+    await apiRequest(`/api/users/${id}`, {method:'PATCH', token, body:patch});
+    await load();
+  }
+
+  return (
+    <div style={{display:'grid', gap:14}}>
+      <form onSubmit={create} style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))', gap:10, alignItems:'end'}}>
+        <Field label="Usuario"><input style={inputStyle} value={form.username} onChange={e=>setForm({...form, username:e.target.value})} /></Field>
+        <Field label="Nombre"><input style={inputStyle} value={form.display_name} onChange={e=>setForm({...form, display_name:e.target.value})} /></Field>
+        <Field label="Rol"><select style={inputStyle} value={form.role} onChange={e=>setForm({...form, role:e.target.value})}><option>user</option><option>admin</option><option>viewer</option></select></Field>
+        <Field label="Contrasena"><input style={inputStyle} type="password" value={form.password} onChange={e=>setForm({...form, password:e.target.value})} /></Field>
+        <button style={{border:'none', borderRadius:6, background:C.green, color:'#fff', padding:'10px 12px', fontFamily:'monospace', cursor:'pointer'}}>Crear</button>
+      </form>
+      {message && <div style={{fontSize:12, color:C.text1}}>{message}</div>}
+      <div style={{overflowX:'auto'}}>
+        <table style={{width:'100%', borderCollapse:'collapse', fontSize:12}}>
+          <thead><tr>{['Usuario','Nombre','Rol','Activo','Acciones'].map(h=><th key={h} style={{textAlign:'left', borderBottom:`1px solid ${C.border}`, padding:8}}>{h}</th>)}</tr></thead>
+          <tbody>
+            {users.map(u => (
+              <tr key={u.id}>
+                <td style={{padding:8, borderBottom:`1px solid ${C.border}`}}>{u.username}</td>
+                <td style={{padding:8, borderBottom:`1px solid ${C.border}`}}>{u.display_name}</td>
+                <td style={{padding:8, borderBottom:`1px solid ${C.border}`}}>{u.role}</td>
+                <td style={{padding:8, borderBottom:`1px solid ${C.border}`}}>{u.active ? 'Si' : 'No'}</td>
+                <td style={{padding:8, borderBottom:`1px solid ${C.border}`}}>
+                  <button onClick={()=>patchUser(u.id, {active:!u.active})} style={{border:`1px solid ${C.border}`, borderRadius:6, background:'#fff', padding:'6px 8px', cursor:'pointer'}}>{u.active ? 'Desactivar' : 'Activar'}</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function ClaimsManager({session, onLogout}) {
+  const [claims, setClaims] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [filters, setFilters] = useState({status:'', source:'', q:''});
+  const [message, setMessage] = useState('');
+  const [view, setView] = useState('claims');
+
+  const token = session?.token;
+  const user = session?.user;
+
+  async function load() {
+    if (!token) return;
+    const params = new URLSearchParams(Object.fromEntries(Object.entries(filters).filter(([,v]) => v)));
+    const [claimsData, summaryData] = await Promise.all([
+      apiRequest(`/api/claims?${params}`, {token}),
+      apiRequest('/api/claims/summary', {token}),
+    ]);
+    setClaims(claimsData.claims || []);
+    setSummary(summaryData.summary || null);
+  }
+
+  useEffect(() => { load().catch(e => setMessage(e.message)); }, [token]);
+
+  async function search(e) {
+    e.preventDefault();
+    setMessage('');
+    try { await load(); } catch (err) { setMessage(err.message); }
+  }
+
+  async function saveClaim(claim, patch) {
+    const updated = {...claim, ...patch};
+    setClaims(items => items.map(item => item.id === claim.id ? updated : item));
+    try {
+      await apiRequest(`/api/claims/${claim.id}`, {method:'PATCH', token, body:patch});
+      await load();
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  const cards = [
+    {label:'Total', value:summary?.total ?? 0, color:C.blue},
+    {label:'Abiertos', value:summary?.abiertos ?? 0, color:C.amber},
+    {label:'Requieren gestion', value:summary?.requiere_gestion ?? 0, color:C.red},
+    {label:'Cerrados', value:summary?.cerrados ?? 0, color:C.green},
+  ];
+
+  return (
+    <div style={{display:'grid', gap:14}}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, flexWrap:'wrap'}}>
+        <div>
+          <div style={{fontSize:18, fontWeight:700, color:C.blue}}>Gestion de reclamos</div>
+          <div style={{fontSize:11, color:C.text2}}>Sesion: {user.username} · {user.role}</div>
+        </div>
+        <div style={{display:'flex', gap:8}}>
+          {user.role === 'admin' && <button onClick={()=>setView(view === 'users' ? 'claims' : 'users')} style={{border:`1px solid ${C.border}`, background:'#fff', borderRadius:6, padding:'8px 10px', cursor:'pointer'}}>{view === 'users' ? 'Ver reclamos' : 'Usuarios'}</button>}
+          <button onClick={onLogout} style={{border:`1px solid ${C.border}`, background:C.bg1, color:C.text0, borderRadius:6, padding:'8px 10px', cursor:'pointer'}}>Salir</button>
+        </div>
+      </div>
+
+      {view === 'users' ? <UsersCrud token={token} /> : (
+        <>
+          <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))', gap:10}}>
+            {cards.map(k => <div key={k.label} style={{background:C.bg1, border:`1px solid ${C.border}`, borderLeft:`4px solid ${k.color}`, borderRadius:8, padding:14}}><div style={{fontSize:10, color:C.text2, textTransform:'uppercase'}}>{k.label}</div><div style={{fontSize:24, color:k.color, fontWeight:700}}>{k.value}</div></div>)}
+          </div>
+
+          <form onSubmit={search} style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr)) auto', gap:10, alignItems:'end'}}>
+            <Field label="Estado"><select style={inputStyle} value={filters.status} onChange={e=>setFilters({...filters, status:e.target.value})}><option value="">Todos</option>{CLAIM_STATUSES_UI.map(s=><option key={s}>{s}</option>)}</select></Field>
+            <Field label="Fuente"><input style={inputStyle} value={filters.source} onChange={e=>setFilters({...filters, source:e.target.value})} placeholder="NPS, RMD..." /></Field>
+            <Field label="Buscar"><input style={inputStyle} value={filters.q} onChange={e=>setFilters({...filters, q:e.target.value})} placeholder="cliente, ticket, asunto" /></Field>
+            <button style={{border:'none', borderRadius:6, background:C.text0, color:'#fff', padding:'10px 12px', fontFamily:'monospace', cursor:'pointer'}}>Filtrar</button>
+          </form>
+
+          {message && <div style={{fontSize:12, color:C.text1, background:'#fff', border:`1px solid ${C.border}`, borderRadius:6, padding:10}}>{message}</div>}
+
+          <div style={{overflowX:'auto', background:C.bg1, border:`1px solid ${C.border}`, borderRadius:8}}>
+            <table style={{width:'100%', borderCollapse:'collapse', fontSize:11, minWidth:1180}}>
+              <thead><tr>{['Fuente','Fecha','Ticket','Cliente','Asunto','Comentario','Estado','Responsable','Respuesta','Action Log'].map(h=><th key={h} style={{textAlign:'left', borderBottom:`1px solid ${C.border}`, padding:8, color:C.text2}}>{h}</th>)}</tr></thead>
+              <tbody>
+                {claims.map(claim => (
+                  <tr key={claim.id}>
+                    <td style={{padding:8, borderBottom:`1px solid ${C.border}`}}>{claim.source_label || claim.source}</td>
+                    <td style={{padding:8, borderBottom:`1px solid ${C.border}`}}>{claim.opened_at ? new Date(claim.opened_at).toLocaleDateString('es-AR') : ''}</td>
+                    <td style={{padding:8, borderBottom:`1px solid ${C.border}`}}>{claim.external_id}</td>
+                    <td style={{padding:8, borderBottom:`1px solid ${C.border}`}}><b>{claim.customer_id}</b><br />{claim.customer_name}</td>
+                    <td style={{padding:8, borderBottom:`1px solid ${C.border}`}}>{claim.subject || claim.driver_primary}</td>
+                    <td style={{padding:8, borderBottom:`1px solid ${C.border}`, maxWidth:260, whiteSpace:'normal'}}>{claim.comment}
+                      <details style={{marginTop:8}}><summary style={{cursor:'pointer'}}>Datos completos</summary>
+                        <div style={{maxHeight:360,overflow:'auto',minWidth:230}}>
+                          {Object.entries({...claim.raw,...claim.manual_data}).map(([key,value])=><label key={key} style={{display:'block',marginTop:8,overflowWrap:'anywhere'}}>{key}
+                            {claim.source==='BEES_CARE' && user.role!=='viewer' ? <input aria-label={key} style={{...inputStyle,width:'100%',boxSizing:'border-box'}} defaultValue={String(value ?? '')} onBlur={e=>{if(e.target.value!==String(value??''))saveClaim(claim,{manual_data:{[key]:e.target.value}});}} /> : <div style={{color:C.text1}}>{String(value ?? '')}</div>}
+                          </label>)}
+                        </div>
+                      </details>
+                    </td>
+                    <td style={{padding:8, borderBottom:`1px solid ${C.border}`}}><select disabled={user.role==='viewer'} style={inputStyle} value={claim.status || 'Nuevo'} onChange={e=>saveClaim(claim, {status:e.target.value, closed_at:e.target.value==='Cerrado' ? new Date().toISOString() : claim.closed_at})}>{CLAIM_STATUSES_UI.map(s=><option key={s}>{s}</option>)}</select></td>
+                    <td style={{padding:8, borderBottom:`1px solid ${C.border}`}}><input disabled={user.role==='viewer'} style={inputStyle} defaultValue={claim.owner_name || ''} onBlur={e=>saveClaim(claim, {owner_name:e.target.value})} /></td>
+                    <td style={{padding:8, borderBottom:`1px solid ${C.border}`}}><textarea disabled={user.role==='viewer'} style={{...inputStyle, minHeight:58}} defaultValue={claim.response || ''} onBlur={e=>saveClaim(claim, {response:e.target.value, answered_by:user.username, answered_at:new Date().toISOString()})} /></td>
+                    <td style={{padding:8, borderBottom:`1px solid ${C.border}`}}><textarea disabled={user.role==='viewer'} style={{...inputStyle, minHeight:58}} defaultValue={claim.action_log || ''} onBlur={e=>saveClaim(claim, {action_log:e.target.value})} /></td>
+                  </tr>
+                ))}
+                {!claims.length && <tr><td colSpan="10" style={{padding:22, textAlign:'center', color:C.text2}}>Sin reclamos cargados.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function readFileAsBase64(selected) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+    reader.onerror = reject;
+    reader.readAsDataURL(selected);
+  });
+}
+
+function ImportsManager({session}) {
+  const [conflicts,setConflicts]=useState([]);
+  const [existingDuplicates,setExistingDuplicates]=useState([]);
+  const [archiveView,setArchiveView]=useState(null);
+  async function viewArchive(item,offset=0) {
+    try {
+      const data=await apiRequest(`/api/import/archive/${item.id}?offset=${offset}`,{token:session.token});
+      setArchiveView({item,offset,rows:data.rows});
+    } catch(error) { setMessage(error.message); }
+  }
+  const token = session?.token;
+  const user = session?.user;
+  const [claimSource, setClaimSource] = useState('NPS');
+  const [claimFile, setClaimFile] = useState(null);
+  const [customerFile, setCustomerFile] = useState(null);
+  const [message, setMessage] = useState('');
+  const [summary, setSummary] = useState(null);
+
+  async function load() {
+    const data = await apiRequest('/api/dashboard/summary', {token});
+    setSummary(data.summary);
+    if(user?.role==='admin'){
+      const review=await apiRequest('/api/import/conflicts',{token});
+      setConflicts(review.conflicts);setExistingDuplicates(review.existing||[]);
+    }
+  }
+  useEffect(() => { load().catch(e => setMessage(e.message)); }, [token]);
+
+  async function importClaimExcel(e) {
+    e.preventDefault();
+    if (!claimFile) return setMessage('Selecciona un Excel de reclamos.');
+    setMessage('Importando reclamos...');
+    try {
+      const fileBase64 = await readFileAsBase64(claimFile);
+      const result = await apiRequest('/api/import/excel', {method:'POST', token, body:{source:claimSource, fileName:claimFile.name, fileBase64}});
+      setMessage(formatImportReport(result));
+      setClaimFile(null);
+      await load();
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  async function importCustomersCsv(e) {
+    e.preventDefault();
+    if (!customerFile) return setMessage('Selecciona el CSV de clientes.');
+    setMessage('Importando clientes...');
+    try {
+      const fileBase64 = await readFileAsBase64(customerFile);
+      const result = await apiRequest('/api/import/customers', {method:'POST', token, body:{fileName:customerFile.name, fileBase64}});
+      setMessage(`Clientes importados. Nuevos: ${result.inserted}, actualizados: ${result.updated}.`);
+      setCustomerFile(null);
+      await load();
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  async function migrateSheet() {
+    setMessage('Migrando Google Sheet historico...');
+    try {
+      const result = await apiRequest('/api/import/sheet', {method:'POST', token});
+      setMessage(result.results.map(r => r.ok ? `${r.sheet}: ${formatImportReport(r)}` : `${r.sheet}: error ${r.error}`).join(' | '));
+      await load();
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  if (user?.role !== 'admin') {
+    return <div style={{background:C.bg1, border:`1px solid ${C.border}`, borderRadius:8, padding:18}}>Solo usuarios admin pueden importar datos.</div>;
+  }
+
+  return (
+    <div style={{display:'grid', gap:14}}>
+      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:10}}>
+        <div style={{background:C.bg1, border:`1px solid ${C.border}`, borderRadius:8, padding:14}}><div style={{fontSize:10, color:C.text2}}>Reclamos</div><div style={{fontSize:24, fontWeight:800, color:C.blue}}>{summary?.claims?.total ?? 0}</div></div>
+        <div style={{background:C.bg1, border:`1px solid ${C.border}`, borderRadius:8, padding:14}}><div style={{fontSize:10, color:C.text2}}>Clientes</div><div style={{fontSize:24, fontWeight:800, color:C.green}}>{summary?.customers?.total ?? 0}</div></div>
+        <div style={{background:C.bg1, border:`1px solid ${C.border}`, borderRadius:8, padding:14}}><div style={{fontSize:10, color:C.text2}}>Lotes</div><div style={{fontSize:24, fontWeight:800, color:C.amber}}>{summary?.imports?.length ?? 0}</div></div>
+      </div>
+      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))', gap:12}}>
+        <form onSubmit={importClaimExcel} style={{background:C.bg1, border:`1px solid ${C.border}`, borderRadius:8, padding:14, display:'grid', gap:10}}>
+          <div style={{fontWeight:800, color:C.text0}}>Reclamos por Excel</div>
+          <Field label="Tipo"><select style={inputStyle} value={claimSource} onChange={e=>setClaimSource(e.target.value)}>{CLAIM_SOURCES_UI.map(s=><option key={s.value} value={s.value}>{s.label}</option>)}</select></Field>
+          <Field label="Archivo"><input style={inputStyle} type="file" accept=".xlsx,.xls" onChange={e=>setClaimFile(e.target.files?.[0] || null)} /></Field>
+          <button style={{border:'none', borderRadius:6, background:C.blue, color:'#fff', padding:'10px 12px', fontFamily:'monospace', cursor:'pointer'}}>Importar reclamos</button>
+        </form>
+        <form onSubmit={importCustomersCsv} style={{background:C.bg1, border:`1px solid ${C.border}`, borderRadius:8, padding:14, display:'grid', gap:10}}>
+          <div style={{fontWeight:800, color:C.text0}}>Clientes por CSV</div>
+          <Field label="Archivo"><input style={inputStyle} type="file" accept=".csv" onChange={e=>setCustomerFile(e.target.files?.[0] || null)} /></Field>
+          <button style={{border:'none', borderRadius:6, background:C.green, color:'#fff', padding:'10px 12px', fontFamily:'monospace', cursor:'pointer'}}>Importar clientes</button>
+        </form>
+        <div style={{background:C.bg1, border:`1px solid ${C.border}`, borderRadius:8, padding:14, display:'grid', gap:10, alignContent:'start'}}>
+          <div style={{fontWeight:800, color:C.text0}}>Google Sheet historico</div>
+          <button onClick={migrateSheet} style={{border:`1px solid ${C.blue}`, color:C.blue, background:C.bg1, borderRadius:6, padding:'10px 12px', fontFamily:'monospace', cursor:'pointer'}}>Migrar hojas publicadas</button>
+        </div>
+      </div>
+      {message && <div style={{fontSize:12, color:C.text1, background:C.bg1, border:`1px solid ${C.border}`, borderRadius:6, padding:10}}>{message}</div>}
+      <section><h3 style={{fontSize:15}}>Archivos conservados</h3>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>{summary?.archives?.map(item=><button key={item.id} onClick={()=>viewArchive(item)} style={{...inputStyle,cursor:'pointer'}}>{item.source} · {new Date(item.created_at).toLocaleDateString('es-AR')} · {item.total} filas</button>)}</div>
+        {archiveView && <div style={{marginTop:12}}>
+          {archiveView.item.report&&<p role="status">{formatImportReport(archiveView.item.report)}</p>}
+          <div style={{display:'flex',gap:12,alignItems:'center'}}><button disabled={!archiveView.offset} onClick={()=>viewArchive(archiveView.item,archiveView.offset-100)}>Anterior</button><span>{archiveView.offset+1} - {Math.min(archiveView.offset+100,archiveView.item.total)} / {archiveView.item.total}</span><button disabled={archiveView.offset+100>=archiveView.item.total} onClick={()=>viewArchive(archiveView.item,archiveView.offset+100)}>Siguiente</button></div>
+          <div style={{overflow:'auto',maxHeight:480,marginTop:10}}><table style={{borderCollapse:'collapse',fontSize:11}}><thead><tr>{[...new Set(archiveView.rows.flatMap(Object.keys))].map(k=><th key={k} style={{padding:8,border:`1px solid ${C.border}`,whiteSpace:'nowrap'}}>{k}</th>)}</tr></thead><tbody>{archiveView.rows.map((row,i)=><tr key={i}>{[...new Set(archiveView.rows.flatMap(Object.keys))].map(k=><td key={k} style={{padding:8,border:`1px solid ${C.border}`,minWidth:100,maxWidth:320,overflowWrap:'anywhere'}}>{String(row[k]??'')}</td>)}</tr>)}</tbody></table></div>
+        </div>}
+      </section>
+      <section><h3 style={{fontSize:15}}>Coincidencias pendientes de revision</h3>
+        {existingDuplicates.length>0&&<details><summary>Grupos historicos con coincidencias: {existingDuplicates.length}</summary><ul>{existingDuplicates.map((group,i)=><li key={i}>{group.source}: reclamos {group.claim_ids.join(', ')}</li>)}</ul></details>}
+        {!conflicts.length?<p>Sin nuevos ingresos pendientes.</p>:<div style={{overflow:'auto',maxHeight:400}}><table style={{width:'100%',fontSize:12,textAlign:'left'}}><thead><tr><th>Origen</th><th>Motivo</th><th>Reclamos relacionados</th><th>Datos recibidos</th></tr></thead><tbody>{conflicts.map(c=><tr key={c.id}><td>{c.source}</td><td>{c.reason}</td><td>{c.candidate_ids.join(', ')||'Sin identificador'}</td><td><details><summary>Ver datos</summary>{Object.entries(c.payload).map(([key,v])=><div key={key} style={{overflowWrap:'anywhere'}}><b>{key}: </b>{String(v??'')}</div>)}</details></td></tr>)}</tbody></table></div>}
+      </section>
+    </div>
+  );
+}
+
+
 // =========================================================
 // APP PRINCIPAL
 // =========================================================
 export default function App() {
-  const compact = useCompactLayout();
-  const [tab, setTab] = useState('rmd');
+  const [tab, setTab] = useState('home');
+  const [session, setSession] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('claims_session') || 'null'); } catch { return null; }
+  });
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [data, setData] = useState({});
   const [loading, setLoading] = useState(true);
   const [fromSheets, setFromSheets] = useState(false);
   const [sistema, setSistema] = useState(buildSistema(FALLBACK));
+
+  Object.assign(C, theme === 'dark' ? DARK_THEME : LIGHT_THEME);
+
+  useEffect(() => {
+    document.body.style.background = C.bg0;
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  function saveSession(data) {
+    setSession(data);
+    localStorage.setItem('claims_session', JSON.stringify(data));
+  }
+
+  function logout() {
+    setSession(null);
+    localStorage.removeItem('claims_session');
+    setTab('home');
+  }
 
   useEffect(() => {
     if (!PUBLISHED_BASE || PUBLISHED_BASE === '') {
@@ -2326,13 +2735,6 @@ export default function App() {
   const nsfrUltimo = nsfr.filter(n => parseInt(n.anio) === ultimoAnioNsfr);
   const nsfrYTD = nsfrUltimo.length ? (nsfrUltimo.reduce((s,r) => s + n2(r.nsfr_pct), 0) / nsfrUltimo.length).toFixed(1) : '—';
 
-  const TABS = [
-    {id:'rmd', label:'RMD'},
-    {id:'nps', label:'NPS'},
-    {id:'nsfr', label:'NS FR'},
-    {id:'ia', label:'⚡ Análisis IA'},
-    {id:'informe', label:'📊 Informe Ejecutivo'},
-  ];
 
   const kpis = [
     {label:`RMD ${ultimoAnioRmd} YTD`, val:rmdYTD, sub:'Target 4.75', color: n2(rmdYTD) >= 4.75 ? C.green : C.red},
@@ -2341,62 +2743,22 @@ export default function App() {
     {label:`NS FR ${ultimoAnioNsfr}`, val:`${nsfrYTD}%`, sub:'Target 70%', color: n2(nsfrYTD) >= 70 ? C.green : n2(nsfrYTD) >= 60 ? C.amber : C.red},
   ];
 
+  if (!session) return <div style={{background:C.bg0,minHeight:'100vh',color:C.text0}}><LoginPanel onLogin={saveSession} /></div>;
+  const metricItems=tab==='rmd'?kpis.slice(0,2):tab==='nps'?[kpis[2]]:tab==='nsfr'?[kpis[3]]:[];
+  const needsSheets=['rmd','nps','nsfr','ia','informe'].includes(tab);
   return (
-    <div style={{background:C.bg0, minHeight:'100vh', color:C.text0, fontFamily:"'IBM Plex Mono','Courier New',monospace"}}>
-      <div style={{background:'linear-gradient(90deg, #3B5998 0%, #4a6aaa 100%)', padding:compact ? '14px 16px' : '16px 28px', display:'flex', flexDirection:compact ? 'column' : 'row', alignItems:compact ? 'flex-start' : 'center', justifyContent:'space-between', gap:compact ? 10 : 0, boxShadow:'0 2px 8px rgba(59,89,152,0.25)'}}>
-        <div>
-          <div style={{fontSize:9, color:'rgba(255,255,255,0.65)', letterSpacing:3, textTransform:'uppercase', fontFamily:'monospace'}}>del Palacio S.A.</div>
-          <div style={{fontSize:compact ? 17 : 20, fontWeight:700, color:'#ffffff', letterSpacing:1.2, marginTop:3, fontFamily:'monospace'}}>DASHBOARD OPERATIVO</div>
-        </div>
-        <div style={{textAlign:compact ? 'left' : 'right', fontSize:10}}>
-          <div style={{color: fromSheets ? '#4ade80' : '#fbbf24', marginBottom:4, fontFamily:'monospace'}}>
-            {loading ? '○ Cargando...' : fromSheets ? '● Google Sheets en vivo' : '● Datos locales'}
-          </div>
-          <div style={{color:'rgba(255,255,255,0.5)', letterSpacing:1, fontFamily:'monospace', fontSize:9}}>RMD · NPS · NS FR</div>
-        </div>
-      </div>
-
-      {!loading && (
-        <div style={{padding:compact ? '12px 12px' : '14px 24px'}}>
-          <div style={{display:'grid', gridTemplateColumns:`repeat(auto-fit, minmax(${compact ? 145 : 170}px, 1fr))`, gap:10}}>
-            {kpis.map(k => (
-              <div key={k.label} style={{background:C.bg1, border:`1px solid ${C.border}`, borderLeft:`4px solid ${k.color}`, borderRadius:10, padding:compact ? '12px 14px' : '14px 18px', boxShadow:'0 1px 4px rgba(59,89,152,0.08)'}}>
-                <div style={{fontSize:10, color:C.text2, textTransform:'uppercase', letterSpacing:1.5, marginBottom:6, fontWeight:600}}>{k.label}</div>
-                <div style={{fontSize:compact ? 22 : 26, fontWeight:700, color:k.color, fontFamily:'monospace'}}>{k.val}</div>
-                <div style={{fontSize:10, color:C.text1, marginTop:6}}>{k.sub}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{fontSize:10, color:C.text2, marginTop:8, fontFamily:'monospace'}}>{PP_NOTE}</div>
-        </div>
-      )}
-
-      <div style={{padding:compact ? '0 8px' : '0 24px', borderBottom:`2px solid ${C.border}`, display:'flex', gap:2, background:C.bg1, overflowX:'auto', WebkitOverflowScrolling:'touch'}}>
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{
-            background: 'transparent', border:'none',
-            borderBottom: tab===t.id ? `2px solid ${C.blue}` : '2px solid transparent',
-            color: tab===t.id ? C.blue : C.text2,
-            padding:compact ? '11px 14px' : '11px 22px', cursor:'pointer', fontFamily:'monospace', fontSize:compact ? 11 : 12, letterSpacing:0.5, transition:'all .15s',
-            fontWeight: tab===t.id ? 700 : 400, marginBottom:'-2px',
-            whiteSpace:'nowrap', flexShrink:0,
-          }}>{t.label}</button>
-        ))}
-      </div>
-
-      <div style={{padding:compact ? '14px 12px' : '20px 28px'}}>
-        {loading ? (
-          <div style={{textAlign:'center', padding:60, color:C.text2, fontSize:13}}>Cargando datos desde Google Sheets...</div>
-        ) : (
-          <>
-            {tab==='rmd'  && <TabRMD  data={data} />}
-            {tab==='nps'  && <TabNPSMejorado data={data} />}
-            {tab==='nsfr' && <TabNSFR data={data} />}
-            {tab==='ia'   && <TabIA   data={data} sistema={sistema} />}
-            {tab==='informe' && <TabInforme data={data} />}
-          </>
-        )}
-      </div>
-    </div>
+    <AppShell tab={tab} onNavigate={setTab} theme={theme} onTheme={()=>setTheme(theme==='dark'?'light':'dark')} session={session} onLogout={logout}>
+      {metricItems.length>0&&<ModuleMetrics items={metricItems} loading={loading} fromSheets={fromSheets}/>}
+      {tab==='home'&&<Overview session={session} onNavigate={setTab}/>}
+      {loading&&needsSheets?<div className="loading-module" role="status">Cargando indicadores...</div>:<div className="module-content">
+        {tab==='rmd'&&<TabRMD data={data}/>}
+        {tab==='nps'&&<TabNPSMejorado data={data}/>}
+        {tab==='nsfr'&&<TabNSFR data={data}/>}
+        {tab==='reclamos'&&<ClaimsWorkspace session={session} colors={C} usersView={<UsersCrud token={session.token}/>}/>}
+        {tab==='importaciones'&&<ImportsManager session={session}/>}
+        {tab==='ia'&&<TabIA data={data} sistema={sistema}/>}
+        {tab==='informe'&&<TabInforme data={data}/>}
+      </div>}
+    </AppShell>
   );
 }
