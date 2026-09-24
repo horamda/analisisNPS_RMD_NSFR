@@ -63,7 +63,7 @@ const server = createServer(async (req, res) => {
   const pathname = (req.url || "").split("?")[0];
   if (pathname.startsWith("/api/") && pathname !== "/api/ai") {
     const handled = await handleApi(req, res);
-    if (handled) return;
+    if (handled || res.writableEnded) return;
   }
 
   if (pathname === "/api/ai" && req.method === "OPTIONS") {
